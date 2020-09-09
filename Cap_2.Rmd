@@ -1,0 +1,197 @@
+---
+title: "Capitulo 2 Networks"
+author: "JRV"
+date: "9/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 2.1 Introducción
+Formalmente, una gráfica es una estructura matemática que consiste de dos pares de objetos $G=(V,E)$.  Un conjunto 
+de vértices $V$ (también llamados nodos) y un conjunto de _aristas_ $E$ (también llamados conexiones). Los elementos de $E$ son pares no ordenados $\{u,v\}$ (cuando no es relevante la "dirección" de la conexión) 
+
+```{r, include=TRUE, message=FALSE, warning=FALSE }
+library(igraph)
+library(sand)
+```
+Mostramos los índices de la gráfica
+
+```{r,  include=TRUE,  message=FALSE, warning=FALSE }
+g<- igraph::graph.formula(1-2, 1-3, 2-3, 2-4, 3-5, 4-5, 4-6, 4-7, 5-6, 6-7)
+g
+V(g)
+
+```
+y las conexiones
+```{r, include=TRUE,  message=FALSE, warning=FALSE}
+E(g)
+```
+
+La misma información, en un formato más compacto.
+
+```{r, include=TRUE,  message=FALSE, warning=FALSE}
+g
+```
+Una representación visual de la gráfica 
+
+```{r,  include =TRUE}
+plot(g)
+```
+
+Gráficas con ligas dirigidas son indicadas usando $+-$
+
+```{r, include=TRUE,  message=FALSE, warning=FALSE}
+dg <-igraph::graph.formula(1-+2, 1-+3, 2++3)
+plot(dg)
+```
+Notamos que al definir las gráficas dirigidas o no dirigidas, se ha usado la convención usual en etiquetar de 1 a $N$. Las etiquetas pueden ser usadas en vez de la numeración usual
+
+```{r, include=TRUE,  message=FALSE, warning=FALSE}
+dg2 <- igraph::graph.formula(Sam -+ Mary, Sam-+Tom, Mary++Tom)
+dg2
+```
+De manera alternativa, las etiquetas de los vértices pueden ser cambiadas del etiquetado default, creado inicialmente.
+```{r, include=TRUE,  message=FALSE, warning=FALSE}
+V(dg2)$name <- c("Sam", "Mary", "Tom")
+plot(dg2)
+```
+
+## Representación de las gráficas
+
+La información para construir una red tipicamente es almacenada en un archivo. Al nvel más elemental existen 3 formatos básicos: listas de adyacencia, listas de nodos y matrices de adyacencia.
+
+Una representación de una gráfica $G$ por su _lista_ _de_ _adyacencia_ es un arreglo de tamaño $N$ en donde cada elemento de la lista contiene el conjunto de vértices $j$ para los cuales existe una liga/arista de $i$ a $j$.
+Una lista nodal o _lista_ _de_ _nodos_ es una lista de dos columnas de todos los vértices que son ligados por un arco/liga.
+
+```{r, include=TRUE,  message=FALSE, warning=FALSE}
+E(dg2)
+```
+
+La función get.edgelist regresa una lista de conexiones como una matriz de 2 columnas.
+
+```{r, include=TRUE,  message=FALSE, warning=FALSE}
+plot(dg)
+get.edgelist(dg)
+```
+```{r, include =TRUE, echo =TRUE}
+get.adjacency(dg)
+```
+### Operaciones en las gráficas
+
+
+Operaciones sobre las gráficas a veces son necesarias. Por ejempplo
+
+- Extraer parte de una gráfica.
+- Eliminar algunos de sus vértices.
+- Agregar nuevos vértices o 
+- Combinar múltiples gráficas.
+
+La subgráfica __inducida__  es una subgráfica $G'=(V',E')$ donde $V' \subset V$ es un subconjunto especificado de vértices y $E' \subseteq E$ es una colección de conexiones definidas por la gráfica $G$, entre los vértices de $E'$.
+Ejemplo:
+La gráfica $g$ esta definida por 
+
+```{r, include=TRUE,  message=FALSE, warning=FALSE}
+plot(g)
+h <- induced.subgraph(g,1:5)
+h
+plot(h)
+```
+La subgráfica $h$ puede ser construuida al quitar los vértices 6 y 7.
+
+```{r,  include=TRUE,  message=FALSE, warning=FALSE}
+
+h2 <- g - vertices(c(6,7))
+h2
+plot(h2)
+```
+
+Finalmente, los conceptos conjuntistas de unión, unión disjunta, intersección, diferencia y complemento se extienden a gráficas. Por ejemplo, la unión de dos gráficas $H_1$ y $H_2$ es una gráfica cuyos vértices y conexiones son incluidas sí y solo sí estan en al menos una de las gráficas $H_1$ y $H-2$. 
+Por ejemplo
+
+```{r, include=TRUE,  message=FALSE, warning=FALSE}
+h1 <- h
+#resto
+h2 <-graph.formula(4-6, 4-7, 5-6, 6-7)
+g <- graph.union(h1,h2)
+g
+```
+Podemos acceder a atributos de las gráficas por medio del operador $\$$. Por ejemplo, para la gráfica de nombres
+```{r, include=TRUE,  message=FALSE, warning=FALSE}
+V(dg2)$name
+V(dg2)$gender <-c("M","F","M")
+vertex_attr_names(dg2)
+```
+
+
+## Usando dataframes
+### Ejemplo.
+
+Considere por ejemplo el dataset de abogados. El dataframe _elist.lazega_ y las diversas variables atributos de los vértices, en el data frame _v.attr.lazega_ se pueden combinar en un objeto gráfica de la siguiente forma
+
+```{r, include=TRUE,  message=FALSE, warning=FALSE}
+library(sand)
+
+grafica.lazega <- graph.data.frame(elist.lazega, directed = FALSE, vertices = v.attr.lazega)
+##vemos que el comando define una gráfica o un objeto del tipo igraph
+class(grafica.lazega)
+
+## Le agregamos otro atributo a los nodos o vértices
+grafica.lazega$names <- "Lazega Lawyers"
+
+vcount(grafica.lazega)
+ecount(grafica.lazega)
+##demas atributos
+vertex_attr_names(grafica.lazega)
+## otra forma de revisar los atributos
+latrr_lazega <-list.vertex.attributes(grafica.lazega)
+plot(grafica.lazega)
+
+```
+
+
+## Conceptos básicos de gráficas.
+
+Con la adopción de un marco representación de datos relacionales basado en gráficas
+
+## Otro ejemplo
+```{r,  echo = FALSE, include=TRUE,  message=FALSE, warning=FALSE}
+##Cargamos el dataset
+df.coli <-data(Ecoli.data)
+```
+
+```{r,  echo = FALSE, include=TRUE,  message=FALSE, warning=FALSE}
+# tipo de objeto
+class(Ecoli.expr)
+## dimensiones
+dim(Ecoli.expr)
+## matriz de adyacencia
+class(regDB.adj)
+## dimensiones
+dim(regDB.adj)
+```
+Construimos la gráfica a partir de la matriz de adyacencia.
+```{r,  include=TRUE,  message=FALSE, warning=FALSE}
+G.coli <- graph_from_adjacency_matrix(regDB.adj,
+                                      mode = "undirected")
+class(G.coli)
+plot(G.coli)
+```
+
+```{r, echo = FALSE, include=TRUE,  message=FALSE, warning=FALSE}
+#vértices de la gráfica
+Nom_coli <- V(G.coli)
+# Número de vértices
+vcount(G.coli)
+Nom_coli
+#153 vértices
+## conexiones
+Edge_coli <- E(G.coli)
+ecount(G.coli)
+Edge_coli
+#207 conexiones
+
+```
+
